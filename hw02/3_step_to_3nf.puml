@@ -1,0 +1,34 @@
+@startuml step3
+
+entity "clients_3nf" as clients_3nf {
+  * client_id      : serial
+  --
+  client_name      : text
+  client_address   : text
+}
+
+entity "products_3nf" as products_3nf {
+  * product_id     : serial
+  --
+  product_name     : text
+}
+
+entity "orders_3nf" as orders_3nf {
+  * order_id       : integer
+  --
+  client_id        : integer  // FK -> clients_3nf.client_id
+  order_date       : date
+}
+
+entity "order_items_3nf" as order_items_3nf {
+  * order_id       : integer  // FK -> orders_3nf.order_id
+  * product_id     : integer  // FK -> products_3nf.product_id
+  --
+  quantity         : integer
+}
+
+clients_3nf ||--o{ orders_3nf       : "client_id"
+orders_3nf  ||--o{ order_items_3nf  : "order_id"
+products_3nf||--o{ order_items_3nf  : "product_id"
+
+@enduml

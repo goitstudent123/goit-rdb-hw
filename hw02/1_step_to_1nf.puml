@@ -1,0 +1,13 @@
+@startuml step1
+
+entity "orders_1nf" as orders_1nf {
+  * order_id     : integer
+  * product_name : text
+  --
+  quantity       : integer
+  client_name    : text
+  client_address : text
+  order_date     : date
+}
+
+@enduml
