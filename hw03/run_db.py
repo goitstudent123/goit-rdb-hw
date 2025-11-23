@@ -267,37 +267,200 @@ def main():
         # import csvs from csv_dataset.zip
         run_sql_script_from_file(conn, "0_step_init.sql")
         import_csv(conn)
+        run_sql_script_from_file(conn, "0_library_schema_init.sql")
+        run_sql_script_from_file(conn, "0_library_schema_data.sql")
+
         queries = {
-            "SELECT * FROM products LIMIT 5": "вибрати всі стовпчики (За допомогою wildcard “*”) з таблиці products",
-            "SELECT name,phone FROM shippers LIMIT 5": "вибрати тільки стовпчики name, phone з таблиці shippers",
+            "SET search_path TO public": "Switch to public",
             """
-            SELECT 
-                AVG(price) AS avg_price,
-                MIN(price) AS min_price,
-                MAX(price) AS max_price
-            FROM products;
-            """: "знайти середнє, максимальне та мінімальне значення стовпчика price таблички products",
+            SELECT
+                od.id              AS order_detail_id,
+                o.id               AS order_id,
+                o.date             AS order_date,
+                c.id               AS customer_id,
+                c.name             AS customer_name,
+                c.country          AS customer_country,
+                p.id               AS product_id,
+                p.name             AS product_name,
+                p.price            AS product_price,
+                cat.id             AS category_id,
+                cat.name           AS category_name,
+                e.employee_id      AS employee_id,
+                e.first_name       AS employee_first_name,
+                e.last_name        AS employee_last_name,
+                sh.id              AS shipper_id,
+                sh.name            AS shipper_name,
+                sup.id             AS supplier_id,
+                sup.name           AS supplier_name
+            FROM order_details od
+                INNER JOIN orders      o   ON od.order_id    = o.id
+                INNER JOIN customers   c   ON o.customer_id  = c.id
+                INNER JOIN products    p   ON od.product_id  = p.id
+                INNER JOIN categories  cat ON p.category_id  = cat.id
+                INNER JOIN employees   e   ON o.employee_id  = e.employee_id
+                INNER JOIN shippers    sh  ON o.shipper_id   = sh.id
+                INNER JOIN suppliers   sup ON p.supplier_id  = sup.id;
+            """: """
+            Напишіть запит за допомогою операторів FROM та INNER JOIN, що об’єднує всі таблиці даних, які ми завантажили з файлів: order_details, orders, customers, products, categories, employees, shippers, suppliers. 
+            """,
             """
-            SELECT DISTINCT
-                category_id,
-                price
-            FROM products
-            ORDER BY price DESC
-            LIMIT 10;
-            """: "обрати унікальні значення колонок category_id та price таблиці products.",
+            SELECT COUNT(*) AS row_count
+            FROM order_details od
+                INNER JOIN orders      o   ON od.order_id    = o.id
+                INNER JOIN customers   c   ON o.customer_id  = c.id
+                INNER JOIN products    p   ON od.product_id  = p.id
+                INNER JOIN categories  cat ON p.category_id  = cat.id
+                INNER JOIN employees   e   ON o.employee_id  = e.employee_id
+                INNER JOIN shippers    sh  ON o.shipper_id   = sh.id
+                INNER JOIN suppliers   sup ON p.supplier_id  = sup.id;
+            """: """
+            Визначте, скільки рядків ви отримали (за допомогою оператора COUNT).
+            """,
             """
-            SELECT COUNT(*) AS product_count
-            FROM products
-            WHERE price BETWEEN 20 AND 100;
-            """: "знайти кількість продуктів (рядків), які знаходиться в цінових межах від 20 до 100",
+            SELECT COUNT(*) AS row_count
+            FROM order_details od
+                INNER JOIN orders      o   ON od.order_id    = o.id
+                INNER JOIN customers   c   ON o.customer_id  = c.id
+                INNER JOIN products    p   ON od.product_id  = p.id
+                INNER JOIN categories  cat ON p.category_id  = cat.id
+                INNER JOIN employees   e   ON o.employee_id  = e.employee_id
+                INNER JOIN shippers    sh  ON o.shipper_id   = sh.id
+                LEFT JOIN suppliers    sup ON p.supplier_id  = sup.id;
+            """: """
+            Змініть декілька операторів INNER на LEFT чи RIGHT. Визначте, що відбувається з кількістю рядків. Чому? Напишіть відповідь у текстовому файлі.
+            """,
             """
-            SELECT 
-                supplier_id,
-                COUNT(*) AS product_count,
-                AVG(price) AS avg_price
-            FROM products
-            GROUP BY supplier_id;
-            """: "знайти кількість продуктів (рядків) та середню ціну (price) у кожного постачальника (supplier_id)"
+            SELECT
+                od.id              AS order_detail_id,
+                o.id               AS order_id,
+                o.date             AS order_date,
+                c.id               AS customer_id,
+                c.name             AS customer_name,
+                c.country          AS customer_country,
+                p.id               AS product_id,
+                p.name             AS product_name,
+                p.price            AS product_price,
+                cat.id             AS category_id,
+                cat.name           AS category_name,
+                e.employee_id      AS employee_id,
+                e.first_name       AS employee_first_name,
+                e.last_name        AS employee_last_name,
+                sh.id              AS shipper_id,
+                sh.name            AS shipper_name,
+                sup.id             AS supplier_id,
+                sup.name           AS supplier_name
+            FROM order_details od
+                INNER JOIN orders      o   ON od.order_id    = o.id
+                INNER JOIN customers   c   ON o.customer_id  = c.id
+                INNER JOIN products    p   ON od.product_id  = p.id
+                INNER JOIN categories  cat ON p.category_id  = cat.id
+                INNER JOIN employees   e   ON o.employee_id  = e.employee_id
+                INNER JOIN shippers    sh  ON o.shipper_id   = sh.id
+                INNER JOIN suppliers   sup ON p.supplier_id  = sup.id
+            WHERE e.employee_id > 3
+              AND e.employee_id <= 10;
+            """: """
+            На основі запита з пункта 3 виконайте наступне: оберіть тільки ті рядки, де employee_id > 3 та ≤ 10.
+            """,
+            """
+                SELECT
+                    cat.name       AS category_name,
+                    od.quantity    AS quantity
+                FROM order_details od
+                    INNER JOIN orders      o   ON od.order_id    = o.id
+                    INNER JOIN customers   c   ON o.customer_id  = c.id
+                    INNER JOIN products    p   ON od.product_id  = p.id
+                    INNER JOIN categories  cat ON p.category_id  = cat.id
+                    INNER JOIN employees   e   ON o.employee_id  = e.employee_id
+                    INNER JOIN shippers    sh  ON o.shipper_id   = sh.id
+                    INNER JOIN suppliers   sup ON p.supplier_id  = sup.id
+                WHERE e.employee_id > 3
+                  AND e.employee_id <= 10
+            """: """
+            Згрупуйте за іменем категорії, порахуйте кількість рядків у групі, середню кількість товару (кількість товару знаходиться в order_details.quantity)
+            """,
+            """
+                        WITH joined AS (
+                SELECT
+                    cat.name       AS category_name,
+                    od.quantity    AS quantity
+                FROM order_details od
+                    INNER JOIN orders      o   ON od.order_id    = o.id
+                    INNER JOIN customers   c   ON o.customer_id  = c.id
+                    INNER JOIN products    p   ON od.product_id  = p.id
+                    INNER JOIN categories  cat ON p.category_id  = cat.id
+                    INNER JOIN employees   e   ON o.employee_id  = e.employee_id
+                    INNER JOIN shippers    sh  ON o.shipper_id   = sh.id
+                    INNER JOIN suppliers   sup ON p.supplier_id  = sup.id
+                WHERE e.employee_id > 3
+                  AND e.employee_id <= 10
+            )
+            SELECT
+                category_name,
+                COUNT(*)              AS row_count,
+                AVG(quantity)         AS avg_quantity
+            FROM joined
+            GROUP BY category_name
+            HAVING AVG(quantity) > 21
+            """: """
+            Відфільтруйте рядки, де середня кількість товару більша за 21.
+            """,
+            """
+                        WITH joined AS (
+                SELECT
+                    cat.name       AS category_name,
+                    od.quantity    AS quantity
+                FROM order_details od
+                    INNER JOIN orders      o   ON od.order_id    = o.id
+                    INNER JOIN customers   c   ON o.customer_id  = c.id
+                    INNER JOIN products    p   ON od.product_id  = p.id
+                    INNER JOIN categories  cat ON p.category_id  = cat.id
+                    INNER JOIN employees   e   ON o.employee_id  = e.employee_id
+                    INNER JOIN shippers    sh  ON o.shipper_id   = sh.id
+                    INNER JOIN suppliers   sup ON p.supplier_id  = sup.id
+                WHERE e.employee_id > 3
+                  AND e.employee_id <= 10
+            )
+            SELECT
+                category_name,
+                COUNT(*)              AS row_count,
+                AVG(quantity)         AS avg_quantity
+            FROM joined
+            GROUP BY category_name
+            HAVING AVG(quantity) > 21
+            ORDER BY row_count DESC
+            """: """
+            Відсортуйте рядки за спаданням кількості рядків.
+            """,
+            """
+            WITH joined AS (
+                SELECT
+                    cat.name       AS category_name,
+                    od.quantity    AS quantity
+                FROM order_details od
+                    INNER JOIN orders      o   ON od.order_id    = o.id
+                    INNER JOIN customers   c   ON o.customer_id  = c.id
+                    INNER JOIN products    p   ON od.product_id  = p.id
+                    INNER JOIN categories  cat ON p.category_id  = cat.id
+                    INNER JOIN employees   e   ON o.employee_id  = e.employee_id
+                    INNER JOIN shippers    sh  ON o.shipper_id   = sh.id
+                    INNER JOIN suppliers   sup ON p.supplier_id  = sup.id
+                WHERE e.employee_id > 3
+                  AND e.employee_id <= 10
+            )
+            SELECT
+                category_name,
+                COUNT(*)              AS row_count,
+                AVG(quantity)         AS avg_quantity
+            FROM joined
+            GROUP BY category_name
+            HAVING AVG(quantity) > 21
+            ORDER BY row_count DESC
+            OFFSET 1
+            LIMIT 4;
+            """: """
+            Виведіть на екран (оберіть) чотири рядки з пропущеним першим рядком.
+            """,
         }
         for query, title in queries.items():
             print_query_result(conn, query, title=title)
